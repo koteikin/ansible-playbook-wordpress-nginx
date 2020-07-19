@@ -1,6 +1,8 @@
 - hosts: webservers
 
   roles:
+    - users
+    - base
     - nginx
     - wordpress
     - mysql

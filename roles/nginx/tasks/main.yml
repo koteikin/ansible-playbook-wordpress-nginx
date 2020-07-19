@@ -1,5 +1,9 @@
 ---
 # tasks file for nginx
+- name: Add nginx ppa mainline
+  become: yes
+  apt_repository:
+    repo: ppa:nginx/stable
 
 - name: Update apt cache
   apt: update_cache=yes cache_valid_time=3600
@@ -10,17 +14,37 @@
   become: yes
   with_items:
     - nginx
-    - git
 
 - name: Start nginx
   become: yes
   service:
     name: nginx
     state: started
+    enabled: yes
 
-- name: Update nginx confs for WordPress + PHP
-  template: "src=../templates/default-site.conf dest=/etc/nginx/sites-available/{{server_hostname}} owner=www-data group=www-data mode=0644"
+- name: nginx main config tuning
+  template: "src=nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=www-data group=www-data mode=0644"
   become: yes
+  notify:
+    - restart nginx
+
+- name: letsencrypt config
+  template: "src=letsencrypt.conf.j2 dest=/etc/nginx/letsencrypt.conf owner=www-data group=www-data mode=0644"
+  become: yes
+  notify:
+    - restart nginx
+
+- name: security config
+  template: "src=security.conf.j2 dest=/etc/nginx/security.conf owner=www-data group=www-data mode=0644"
+  become: yes
+  notify:
+    - restart nginx  
+
+- name: Update nginx confs for WordPress + PHP 
+  template: "src=default-site.conf.j2 dest=/etc/nginx/sites-available/{{server_hostname}} owner=www-data group=www-data mode=0644"
+  become: yes
+  notify:
+    - restart nginx
 
 - name: Enable site
   file: src=/etc/nginx/sites-available/{{server_hostname}} dest=/etc/nginx/sites-enabled/{{server_hostname}} owner=www-data group=www-data state=link

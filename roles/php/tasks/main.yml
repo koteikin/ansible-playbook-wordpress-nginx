@@ -1,26 +1,40 @@
 ---
 # tasks file for php
 
+- name: Install PHP repository
+  become: yes
+  apt_repository:
+    repo: 'ppa:ondrej/php'
+    codename: "{{ ansible_distribution_release }}" 
+
+
 - name: Install php extensions
   apt:
     name: "{{ item }}"
     state: present
   become: yes
   with_items:
-    - php7.0
-    - php7.0-mysql
-    - php7.0-gd
-    - php-ssh2
-    - php7.0-mcrypt
+    - php7.3
+    - php7.3-fpm
+    - php7.3-common
+    - php7.3-cli
+    - php7.3-gd
+    - php7.3-curl
+    - php7.3-mysql
+    - php7.3-gd
+    - php7.3-mcrypt
+    - php7.3-opcache
 
 - name: Setup php-fpm
-  replace: dest=/etc/php/7.0/fpm/php.ini regexp="(;cgi.fix_pathinfo=1)" replace="cgi.fix_pathinfo=0"
+  replace: dest=/etc/php/7.3/fpm/php.ini regexp="(;cgi.fix_pathinfo=1)" replace="cgi.fix_pathinfo=0"
   notify:
     - restart nginx
+    - restart php-fpm
   become: yes
 
 - name: Add php settings
   template: src=../../nginx/templates/nginx-wp-common.conf dest=/etc/nginx/nginx-wp-common.conf owner=www-data group=www-data mode=0644
   notify:
     - restart nginx
+    - restart php-fpm
   become: yes
